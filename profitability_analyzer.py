@@ -129,6 +129,10 @@ def calculate_stats(trade_results, cumulative_returns_percent, initial_capital=1
     """
     returns = np.array(trade_results) / (initial_capital / 100.0) # Calculate returns as percentage of initial capital
 
+    print("First 10 trade_results:", trade_results[:10]) # Debugging
+    print("First 10 returns:", returns[:10]) # Debugging
+    print("Initial Capital:", initial_capital) # Debugging
+
 
     # Sharpe Ratio (assuming risk-free rate is 0)
     sharpe_ratio = np.mean(returns) / np.std(returns) if np.std(returns) != 0 else np.nan
