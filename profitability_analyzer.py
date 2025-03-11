@@ -77,9 +77,9 @@ def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_
     # Debug: Print average_cumulative_returns_percent before plotting
     # print("Average Cumulative Returns (first 10 values):", average_cumulative_returns_percent[:10]) # No longer needed
 
-    # Plot individual simulations in light grey
+    # Plot individual simulations in grey with alpha=0.3
     for returns in all_cumulative_returns_percent:
-        ax.plot(returns, color='lightgrey', linewidth=0.5)
+        ax.plot(returns, color='grey', linewidth=0.5, alpha=0.3)
 
     # Plot the average cumulative return in magenta with increased linewidth
     ax.plot(average_cumulative_returns_percent, color='magenta', linewidth=2.5, label=f'Average ({num_simulations} simulations)')
