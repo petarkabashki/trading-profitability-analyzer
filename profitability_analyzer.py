@@ -83,38 +83,43 @@ if __name__ == "__main__":
         initial_capital = 10000 # Fixed initial capital, could be a slider too
         risk_per_trade_percent = st.slider("Risk per Trade (%)", min_value=0.1, max_value=10.0, step=0.1, value=1.0)
 
-        if st.button("Run Simulation"):
-            # --- Run Simulations ---
-            all_trade_results = []
-            all_cumulative_returns_percent = []
+    # --- Main Panel for Plot and Summary ---
+    st.header("Simulation Results")
 
-            with st.spinner('Running simulations...'):
-                for _ in range(num_simulations):
-                    trade_results, cumulative_returns_percent = simulate_trades(
-                        num_trades, win_ratio, risk_reward_ratio, initial_capital, risk_per_trade_percent
-                    )
-                    all_trade_results.append(trade_results)
-                    all_cumulative_returns_percent.append(cumulative_returns_percent)
+    # --- Run Simulations --- (Run on initial load and on button click)
+    all_trade_results = []
+    all_cumulative_returns_percent = []
 
-            # --- Calculate Average Cumulative Returns ---
-            max_len = max(len(returns) for returns in all_cumulative_returns_percent)
-            padded_returns = [np.pad(returns, (0, max_len - len(returns)), 'constant', constant_values=np.nan) for returns in all_cumulative_returns_percent]
-            average_cumulative_returns_percent = np.nanmean(padded_returns, axis=0).tolist()
+    with st.spinner('Running simulations...'):
+        for _ in range(num_simulations):
+            trade_results, cumulative_returns_percent = simulate_trades(
+                num_trades, win_ratio, risk_reward_ratio, initial_capital, risk_per_trade_percent
+            )
+            all_trade_results.append(trade_results)
+            all_cumulative_returns_percent.append(cumulative_returns_percent)
 
-            # --- Plot Results ---
-            fig, ax = plt.subplots(figsize=(10, 6)) # Create plot here
-            plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_percent, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent, initial_capital)
-            st.pyplot(fig) # Show plot in streamlit
+    # --- Calculate Average Cumulative Returns ---
+    max_len = max(len(returns) for returns in all_cumulative_returns_percent)
+    padded_returns = [np.pad(returns, (0, max_len - len(returns)), 'constant', constant_values=np.nan) for returns in all_cumulative_returns_percent]
+    average_cumulative_returns_percent = np.nanmean(padded_returns, axis=0).tolist()
 
-            # --- Output Summary ---
-            final_returns_percent = [returns[-1] for returns in all_cumulative_returns_percent]
-            average_final_return_percent = np.mean(final_returns_percent)
+    # --- Plot Results ---
+    fig, ax = plt.subplots(figsize=(10, 6)) # Create plot here
+    plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_percent, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent, initial_capital)
+    st.pyplot(fig) # Show plot in streamlit
 
-            st.write("--- Simulation Summary ---")
-            st.write(f"Number of Simulations: {num_simulations}")
-            st.write(f"Initial Capital: ${initial_capital:.2f}")
-            st.write(f"Number of Trades per Simulation: {num_trades}")
-            st.write(f"Win Ratio: {win_ratio * 100:.2f}%")
-            st.write(f"Risk/Reward Ratio: 1:{risk_reward_ratio:.1f}")
-            st.write(f"Risk per Trade: {risk_per_trade_percent:.2f}%")
-            st.write(f"Average Final Return (over {num_simulations} simulations): {average_final_return_percent:.2f}%")
+    # --- Output Summary ---
+    final_returns_percent = [returns[-1] for returns in all_cumulative_returns_percent]
+    average_final_return_percent = np.mean(final_returns_percent)
+
+    st.write("--- Simulation Summary ---")
+    st.write(f"Number of Simulations: {num_simulations}")
+    st.write(f"Initial Capital: ${initial_capital:.2f}")
+    st.write(f"Number of Trades per Simulation: {num_trades}")
+    st.write(f"Win Ratio: {win_ratio * 100:.2f}%")
+    st.write(f"Risk/Reward Ratio: 1:{risk_reward_ratio:.1f}")
+    st.write(f"Risk per Trade: {risk_per_trade_percent:.2f}%")
+    st.write(f"Average Final Return (over {num_simulations} simulations): {average_final_return_percent:.2f}%")
+
+    if st.sidebar.button("Re-run Simulation"): # Button in sidebar to re-run with potentially changed params
+        st.experimental_rerun() # Rerun the script from top, picking up potentially changed slider values
