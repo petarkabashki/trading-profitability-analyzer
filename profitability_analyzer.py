@@ -23,18 +23,30 @@ def simulate_trades_vectorized(num_trades, num_simulations, win_ratio, risk_rewa
         - all_cumulative_log_returns_percent (list of lists): Cumulative log returns (in percent) for each simulation.
         - average_cumulative_log_returns_percent (float): The average of the final cumulative log returns (in percent) across simulations.
     """
+    initial_capital = 100.0  # Initial capital for percentage calculation
     # Generate a matrix of random outcomes: rows represent simulations, columns represent trades.
     random_outcomes = np.random.rand(num_simulations, num_trades)
 
     # Determine wins (True if outcome < win_ratio) and losses.
     wins = random_outcomes < win_ratio
 
-    # Calculate log returns for wins and losses.
-    win_log_return = np.log(1 + risk_reward_ratio * risk_per_trade_percent / 100.0)
-    loss_log_return = np.log(1 - risk_per_trade_percent / 100.0)
+    # Calculate risk and reward amounts for each trade (in currency terms)
+    risk_amount = initial_capital * (risk_per_trade_percent / 100.0)
+    reward_amount = risk_amount * risk_reward_ratio
+
+    # Calculate percentage returns for wins and losses
+    win_return_percent = (reward_amount / initial_capital) * 100.0
+    loss_return_percent = (-risk_amount / initial_capital) * 100.0
+
+    # Vectorized trade results in percentage returns
+    trade_results_simulation_percent = np.where(wins, win_return_percent, loss_return_percent)
+
 
     # Compute trade log returns for each simulation.
+    win_log_return = np.log(1 + risk_reward_ratio * risk_per_trade_percent / 100.0)
+    loss_log_return = np.log(1 - risk_per_trade_percent / 100.0)
     trade_log_returns = np.where(wins, win_log_return, loss_log_return)
+
 
     # Compute cumulative log returns along each simulation.
     cumulative_log_returns = np.cumsum(trade_log_returns, axis=1)
@@ -55,7 +67,8 @@ def simulate_trades_vectorized(num_trades, num_simulations, win_ratio, risk_rewa
     return (cumulative_returns_percent.tolist(),
             average_cumulative_returns_percent, # Now this is a timeseries array
             cumulative_log_returns_percent.tolist(),
-            average_cumulative_log_returns_percent)
+            average_cumulative_log_returns_percent,
+            trade_results_simulation_percent.tolist()) # Return trade results in percentage
 
 
 def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_percent, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent):
@@ -115,14 +128,13 @@ def calculate_drawdown(cumulative_returns_percent):
     return max_drawdown
 
 
-def calculate_stats(trade_results, cumulative_returns_percent, initial_capital=100): # Initial capital is fixed to 100 for % returns
+def calculate_stats(trade_results, cumulative_returns_percent): # Initial capital is fixed to 100 for % returns
     """
     Calculates performance statistics from trade results and cumulative returns.
 
     Args:
-        trade_results (list): List of individual trade outcomes (+reward or -risk).
+        trade_results (list): List of individual trade outcomes (+reward or -risk) in percentage.
         cumulative_returns_percent (list): List of cumulative returns in percentage.
-        initial_capital (float): Starting capital (for percentage calculations, now fixed to 100).
 
     Returns:
         dict: Dictionary of performance statistics.
@@ -131,7 +143,6 @@ def calculate_stats(trade_results, cumulative_returns_percent, initial_capital=1
 
     print("First 10 trade_results:", trade_results[:10]) # Debugging
     print("First 10 returns:", returns[:10]) # Debugging
-    print("Initial Capital:", initial_capital) # Debugging
 
 
     # Sharpe Ratio (assuming risk-free rate is 0)
@@ -195,7 +206,7 @@ if __name__ == "__main__":
     all_max_drawdowns = [] # List to store max drawdowns for each simulation
 
     with st.spinner('Running simulations...'):
-        all_cumulative_returns_percent, average_cumulative_returns_percent, all_trade_results, average_cumulative_log_returns_percent = simulate_trades_vectorized(
+        all_cumulative_returns_percent, average_cumulative_returns_percent, all_cumulative_log_returns_percent, average_cumulative_log_returns_percent, all_trade_results = simulate_trades_vectorized(
             num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percent
         )
 
