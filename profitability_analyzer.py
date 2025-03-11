@@ -72,6 +72,10 @@ def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_
 if __name__ == "__main__":
     st.title("Interactive Profitability Analyzer")
 
+    # Initialize session state for button click
+    if 'rerun_button_clicked' not in st.session_state:
+        st.session_state.rerun_button_clicked = False
+
     # --- Sidebar for Parameters ---
     with st.sidebar:
         st.header("Simulation Parameters")
@@ -82,6 +86,9 @@ if __name__ == "__main__":
         risk_reward_ratio = st.slider("Risk/Reward Ratio", min_value=0.1, max_value=5.0, step=0.1, value=2.0)
         initial_capital = 10000 # Fixed initial capital, could be a slider too
         risk_per_trade_percent = st.slider("Risk per Trade (%)", min_value=0.1, max_value=10.0, step=0.1, value=1.0)
+
+        if st.button("Re-run Simulation"): # Button in sidebar to re-run with potentially changed params
+            st.session_state.rerun_button_clicked = True # Set button click state
 
     # --- Main Panel for Plot and Summary ---
     st.header("Simulation Results")
@@ -121,5 +128,5 @@ if __name__ == "__main__":
     st.write(f"Risk per Trade: {risk_per_trade_percent:.2f}%")
     st.write(f"Average Final Return (over {num_simulations} simulations): {average_final_return_percent:.2f}%")
 
-    if st.sidebar.button("Re-run Simulation"): # Button in sidebar to re-run with potentially changed params
-        st.experimental_rerun() # Rerun the script from top, picking up potentially changed slider values
+    if st.session_state.rerun_button_clicked: # Check if button was clicked
+        st.session_state.rerun_button_clicked = False # Reset button click state
