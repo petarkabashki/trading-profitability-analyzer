@@ -74,9 +74,9 @@ if __name__ == "__main__":
     root.withdraw()  # Hide the main tkinter window
 
     # --- User Input via Dialogs ---
-    num_simulations = simpledialog.askinteger("Input", "Enter number of simulations:", initialvalue=5)
-    num_trades = simpledialog.askinteger("Input", "Enter number of trades per simulation:", initialvalue=100)
-    win_ratio_percent = simpledialog.askfloat("Input", "Enter win ratio percentage (0-100):", initialvalue=50.0)
+    num_simulations = simpledialog.askinteger("Input", "Enter number of simulations:", initialvalue=100)
+    num_trades = simpledialog.askinteger("Input", "Enter number of trades per simulation:", initialvalue=1000)
+    win_ratio_percent = simpledialog.askfloat("Input", "Enter win ratio percentage (0-100):", initialvalue=40.0)
     win_ratio = win_ratio_percent / 100.0
     risk_reward_ratio = simpledialog.askfloat("Input", "Enter risk/reward ratio (e.g., 2 for 1:2):", initialvalue=2.0)
     initial_capital = simpledialog.askfloat("Input", "Enter initial capital:", initialvalue=10000)
