@@ -177,17 +177,12 @@ if __name__ == "__main__":
     all_max_drawdowns = [] # List to store max drawdowns for each simulation
 
     with st.spinner('Running simulations...'):
-        all_trade_results, all_cumulative_returns_percent = simulate_trades(
+        all_cumulative_returns_percent, average_cumulative_returns_percent, all_trade_results, average_cumulative_log_returns_percent = simulate_trades_vectorized(
             num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percent
         )
 
         for returns in all_cumulative_returns_percent:
             all_max_drawdowns.append(calculate_drawdown(returns)) # Calculate and store max drawdown
-
-    # --- Calculate Average Cumulative Returns ---
-    max_len = max(len(returns) for returns in all_cumulative_returns_percent)
-    padded_returns = [np.pad(returns, (0, max_len - len(returns)), 'constant', constant_values=np.nan) for returns in all_cumulative_returns_percent]
-    average_cumulative_returns_percent = np.nanmean(padded_returns, axis=0).tolist()
 
     # --- Plot Results ---
     fig, ax = plt.subplots(figsize=(10, 6)) # Create plot here
