@@ -22,6 +22,7 @@ def simulate_trades_vectorized(num_trades, num_simulations, win_ratio, risk_rewa
         - average_cumulative_returns_percent (np.ndarray): The average cumulative returns (in percent) across simulations *over time*.
         - all_cumulative_log_returns_percent (list of lists): Cumulative log returns (in percent) for each simulation.
         - average_cumulative_log_returns_percent (float): The average of the final cumulative log returns (in percent) across simulations.
+        - trade_results_simulation_percent (list of lists): Trade results in percentage for each simulation.
     """
     initial_capital = 100.0  # Initial capital for percentage calculation
     # Generate a matrix of random outcomes: rows represent simulations, columns represent trades.
@@ -151,17 +152,17 @@ def calculate_stats(trade_results, cumulative_returns_percent): # Initial capita
     # Sortino Ratio (assuming risk-free rate is 0)
     downside_returns = returns[returns < 0]
     downside_deviation = np.std(downside_returns) if len(downside_returns) > 0 else np.nan
-    sortino_ratio = np.mean(returns) / downside_deviation if downside_deviation != 0 else np.nan
 
     # Profit Factor
     gross_profit = np.sum(returns[returns > 0])
     gross_loss = np.abs(np.sum(returns[returns < 0]))
     profit_factor = gross_profit / gross_loss if gross_loss != 0 else np.nan
 
+    print("Downside Returns:", downside_returns) # Debugging
+    print("Downside Deviation:", downside_deviation) # Debugging
     print("Gross Profit:", gross_profit) # Debugging
     print("Gross Loss:", gross_loss) # Debugging
     print("Profit Factor (calculated):", profit_factor) # Debugging
-    print("Downside Deviation:", downside_deviation) # Debugging
 
 
     # Max Drawdown
