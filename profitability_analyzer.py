@@ -152,6 +152,9 @@ def calculate_stats(trade_results, cumulative_returns_percent): # Initial capita
     # Sortino Ratio (assuming risk-free rate is 0)
     downside_returns = returns[returns < 0]
     downside_deviation = np.std(downside_returns) if len(downside_returns) > 0 else np.nan
+    sortino_ratio = np.nan # Initialize sortino_ratio to nan
+    if downside_deviation != 0:
+        sortino_ratio = np.mean(returns) / downside_deviation
 
     # Profit Factor
     gross_profit = np.sum(returns[returns > 0])
@@ -163,6 +166,7 @@ def calculate_stats(trade_results, cumulative_returns_percent): # Initial capita
     print("Gross Profit:", gross_profit) # Debugging
     print("Gross Loss:", gross_loss) # Debugging
     print("Profit Factor (calculated):", profit_factor) # Debugging
+    print("Sortino Ratio (calculated):", sortino_ratio) # Debugging
 
 
     # Max Drawdown
