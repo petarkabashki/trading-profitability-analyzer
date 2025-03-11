@@ -2,39 +2,52 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
-def simulate_trades(num_trades, win_ratio, risk_reward_ratio, risk_per_trade_percent):
+def simulate_trades(num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percent):
     """
-    Simulates a series of trades and calculates the cumulative return in percentage.
+    Simulates multiple series of trades using vectorized operations and calculates cumulative log returns in percentage.
 
     Args:
-        num_trades (int): The number of trades to simulate.
+        num_trades (int): The number of trades to simulate per simulation.
+        num_simulations (int): The number of simulations to run.
         win_ratio (float): The probability of winning a trade (0 to 1).
         risk_reward_ratio (float): The ratio of potential reward to risk.
         risk_per_trade_percent (float): The percentage of capital to risk on each trade.
 
     Returns:
         tuple: A tuple containing:
-            - trade_results (list): List of individual trade outcomes (+reward or -risk).
-            - cumulative_returns_percent (list): List of cumulative returns in percentage after each trade.
+            - all_trade_results (list of lists): List of trade outcomes for each simulation.
+            - all_cumulative_returns_percent (list of lists): List of cumulative returns in percentage for each simulation.
     """
-    capital = 100.0  # Start with 100 as initial capital for percentage calculation
-    cumulative_returns = [capital]
-    trade_results = []
+    initial_capital = 100.0  # Initial capital for percentage calculation
+    all_cumulative_returns_percent = []
+    all_trade_results = []
 
-    for _ in range(num_trades):
-        risk_amount = capital * (risk_per_trade_percent / 100.0)
+    # Vectorized simulation
+    for _ in range(num_simulations):
+        # Generate random outcomes for all trades in a simulation at once
+        trade_outcomes = np.random.rand(num_trades)
+
+        # Determine wins and losses based on win ratio
+        wins = trade_outcomes < win_ratio
+        losses = ~wins
+
+        # Calculate risk and reward amounts for each trade
+        risk_amount = initial_capital * (risk_per_trade_percent / 100.0)
         reward_amount = risk_amount * risk_reward_ratio
 
-        if np.random.rand() < win_ratio:
-            capital += reward_amount
-            trade_results.append(reward_amount)
-        else:
-            capital -= risk_amount
-            trade_results.append(-risk_amount)
-        cumulative_returns.append(capital)
+        # Vectorized trade results
+        trade_results_simulation = np.where(wins, reward_amount, -risk_amount)
 
-    cumulative_returns_percent = [(ret - 100.0) for ret in cumulative_returns] # Returns relative to initial 100
-    return trade_results, cumulative_returns_percent
+        # Calculate cumulative returns in log scale
+        cumulative_returns = np.cumsum(trade_results_simulation) + initial_capital
+        cumulative_returns_percent = np.log(cumulative_returns / initial_capital) * 100 # Log returns in percentage
+
+
+        all_trade_results.append(trade_results_simulation.tolist())
+        all_cumulative_returns_percent.append(cumulative_returns_percent.tolist())
+
+    return all_trade_results, all_cumulative_returns_percent
+
 
 def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_percent, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent):
     """
@@ -59,9 +72,9 @@ def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_
     # Plot the average cumulative return in blue
     ax.plot(average_cumulative_returns_percent, color='blue', label=f'Average ({num_simulations} simulations)')
 
-    ax.set_title(f'Profitability Analyzer - Cumulative Returns ({num_simulations} Simulations)\nWin Ratio: {win_ratio*100:.2f}%, R:R 1:{risk_reward_ratio:.1f}, Trades: {num_trades}, Risk: {risk_per_trade_percent:.2f}%')
+    ax.set_title(f'Profitability Analyzer - Cumulative Returns (Log Scale) ({num_simulations} Simulations)\nWin Ratio: {win_ratio*100:.2f}%, R:R 1:{risk_reward_ratio:.1f}, Trades: {num_trades}, Risk: {risk_per_trade_percent:.2f}%')
     ax.set_xlabel('Number of Trades')
-    ax.set_ylabel('Cumulative Return (%)')
+    ax.set_ylabel('Cumulative Return (%) - Log Scale') # Updated Y-axis label
     ax.grid(True)
     ax.axhline(y=0, color='r', linestyle='--') # Line at 0% return
     ax.legend()
@@ -157,13 +170,12 @@ if __name__ == "__main__":
     all_max_drawdowns = [] # List to store max drawdowns for each simulation
 
     with st.spinner('Running simulations...'):
-        for _ in range(num_simulations):
-            trade_results, cumulative_returns_percent = simulate_trades(
-                num_trades, win_ratio, risk_reward_ratio, risk_per_trade_percent
-            )
-            all_trade_results.append(trade_results)
-            all_cumulative_returns_percent.append(cumulative_returns_percent)
-            all_max_drawdowns.append(calculate_drawdown(cumulative_returns_percent)) # Calculate and store max drawdown
+        all_trade_results, all_cumulative_returns_percent = simulate_trades(
+            num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percent
+        )
+
+        for returns in all_cumulative_returns_percent:
+            all_max_drawdowns.append(calculate_drawdown(returns)) # Calculate and store max drawdown
 
     # --- Calculate Average Cumulative Returns ---
     max_len = max(len(returns) for returns in all_cumulative_returns_percent)
