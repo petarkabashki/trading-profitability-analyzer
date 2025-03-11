@@ -66,20 +66,41 @@ def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_
     ax.axhline(y=0, color='r', linestyle='--') # Line at 0% return
     ax.legend()
 
-
-def calculate_stats(trade_results, initial_capital=100): # Initial capital is fixed to 100 for % returns
+def calculate_drawdown(cumulative_returns_percent):
     """
-    Calculates performance statistics from trade results.
+    Calculates the maximum drawdown from a series of cumulative returns.
+
+    Args:
+        cumulative_returns_percent (list): List of cumulative returns in percentage.
+
+    Returns:
+        float: Maximum drawdown in percentage.
+    """
+    peak = 0.0
+    max_drawdown = 0.0
+    for ret in cumulative_returns_percent:
+        if ret > peak:
+            peak = ret
+        drawdown = (peak - ret)
+        if drawdown > max_drawdown:
+            max_drawdown = drawdown
+    return max_drawdown
+
+
+def calculate_stats(trade_results, cumulative_returns_percent, initial_capital=100): # Initial capital is fixed to 100 for % returns
+    """
+    Calculates performance statistics from trade results and cumulative returns.
 
     Args:
         trade_results (list): List of individual trade outcomes (+reward or -risk).
+        cumulative_returns_percent (list): List of cumulative returns in percentage.
         initial_capital (float): Starting capital (for percentage calculations, now fixed to 100).
 
     Returns:
         dict: Dictionary of performance statistics.
     """
     returns = np.array(trade_results) / (initial_capital / 100.0) # Calculate returns as percentage of initial capital
-    cumulative_returns_percent = np.cumsum(returns)
+
 
     # Sharpe Ratio (assuming risk-free rate is 0)
     sharpe_ratio = np.mean(returns) / np.std(returns) if np.std(returns) != 0 else np.nan
@@ -94,11 +115,16 @@ def calculate_stats(trade_results, initial_capital=100): # Initial capital is fi
     gross_loss = np.abs(np.sum(returns[returns < 0]))
     profit_factor = gross_profit / gross_loss if gross_loss != 0 else np.nan
 
+    # Max Drawdown
+    max_drawdown_percent = calculate_drawdown(cumulative_returns_percent)
+
+
     return {
         "Final Return": f"{cumulative_returns_percent[-1]:.2f}%",
         "Sharpe Ratio": f"{sharpe_ratio:.2f}" if not np.isnan(sharpe_ratio) else "N/A",
         "Sortino Ratio": f"{sortino_ratio:.2f}" if not np.isnan(sortino_ratio) else "N/A",
-        "Profit Factor": f"{profit_factor:.2f}" if not np.isnan(profit_factor) else "N/A"
+        "Profit Factor": f"{profit_factor:.2f}" if not np.isnan(profit_factor) else "N/A",
+        "Max Drawdown": f"{max_drawdown_percent:.2f}%"
     }
 
 
@@ -128,6 +154,7 @@ if __name__ == "__main__":
     # --- Run Simulations --- (Run on initial load and on button click)
     all_trade_results = []
     all_cumulative_returns_percent = []
+    all_max_drawdowns = [] # List to store max drawdowns for each simulation
 
     with st.spinner('Running simulations...'):
         for _ in range(num_simulations):
@@ -136,6 +163,7 @@ if __name__ == "__main__":
             )
             all_trade_results.append(trade_results)
             all_cumulative_returns_percent.append(cumulative_returns_percent)
+            all_max_drawdowns.append(calculate_drawdown(cumulative_returns_percent)) # Calculate and store max drawdown
 
     # --- Calculate Average Cumulative Returns ---
     max_len = max(len(returns) for returns in all_cumulative_returns_percent)
@@ -148,7 +176,11 @@ if __name__ == "__main__":
     st.pyplot(fig) # Show plot in streamlit
 
     # --- Calculate and Display Stats Table ---
-    all_stats = [calculate_stats(results) for results in all_trade_results]
+    all_stats = []
+    for i in range(num_simulations):
+        all_stats.append(calculate_stats(all_trade_results[i], all_cumulative_returns_percent[i]))
+
+
     average_stats = {}
     for key in all_stats[0].keys(): # Assuming all simulations have the same stats keys
         # Extract values for each stat from all simulations, convert to float, and calculate mean
@@ -158,6 +190,9 @@ if __name__ == "__main__":
             average_stats[key] = f"{np.mean(stat_values):.2f}{'%' if '%' in all_stats[0][key] else ''}" if '%' in all_stats[0][key] else f"{np.mean(stat_values):.2f}"
         else:
             average_stats[key] = "N/A" # If no valid values, set to N/A
+
+    # Calculate average max drawdown
+    average_stats["Average Max Drawdown"] = f"{np.mean(all_max_drawdowns):.2f}%"
 
     st.write("--- Average Simulation Summary ---")
     st.table(average_stats)
