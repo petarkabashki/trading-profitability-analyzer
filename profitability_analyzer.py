@@ -2,15 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
-def simulate_trades(num_trades, win_ratio, risk_reward_ratio, initial_capital, risk_per_trade_percent):
+def simulate_trades(num_trades, win_ratio, risk_reward_ratio, risk_per_trade_percent):
     """
-    Simulates a series of trades and calculates the cumulative return.
+    Simulates a series of trades and calculates the cumulative return in percentage.
 
     Args:
         num_trades (int): The number of trades to simulate.
         win_ratio (float): The probability of winning a trade (0 to 1).
         risk_reward_ratio (float): The ratio of potential reward to risk.
-        initial_capital (float): The starting capital.
         risk_per_trade_percent (float): The percentage of capital to risk on each trade.
 
     Returns:
@@ -18,8 +17,8 @@ def simulate_trades(num_trades, win_ratio, risk_reward_ratio, initial_capital, r
             - trade_results (list): List of individual trade outcomes (+reward or -risk).
             - cumulative_returns_percent (list): List of cumulative returns in percentage after each trade.
     """
-    capital = initial_capital
-    cumulative_returns = [capital]  # Start with initial capital
+    capital = 100.0  # Start with 100 as initial capital for percentage calculation
+    cumulative_returns = [capital]
     trade_results = []
 
     for _ in range(num_trades):
@@ -34,10 +33,10 @@ def simulate_trades(num_trades, win_ratio, risk_reward_ratio, initial_capital, r
             trade_results.append(-risk_amount)
         cumulative_returns.append(capital)
 
-    cumulative_returns_percent = [(ret - initial_capital) / initial_capital * 100 for ret in cumulative_returns]
+    cumulative_returns_percent = [(ret - 100.0) for ret in cumulative_returns] # Returns relative to initial 100
     return trade_results, cumulative_returns_percent
 
-def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_percent, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent, initial_capital):
+def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_percent, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent):
     """
     Plots the cumulative returns over trades for multiple simulations and their average.
 
@@ -50,7 +49,6 @@ def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_
         risk_reward_ratio (float): Risk/reward ratio used in simulations.
         num_trades (int): Number of trades per simulation.
         risk_per_trade_percent (float): Risk per trade percentage.
-        initial_capital (float): Initial capital.
     """
     ax.clear() # Clear previous plot
 
@@ -69,6 +67,41 @@ def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_
     ax.legend()
 
 
+def calculate_stats(trade_results, initial_capital=100): # Initial capital is fixed to 100 for % returns
+    """
+    Calculates performance statistics from trade results.
+
+    Args:
+        trade_results (list): List of individual trade outcomes (+reward or -risk).
+        initial_capital (float): Starting capital (for percentage calculations, now fixed to 100).
+
+    Returns:
+        dict: Dictionary of performance statistics.
+    """
+    returns = np.array(trade_results) / (initial_capital / 100.0) # Calculate returns as percentage of initial capital
+    cumulative_returns_percent = np.cumsum(returns)
+
+    # Sharpe Ratio (assuming risk-free rate is 0)
+    sharpe_ratio = np.mean(returns) / np.std(returns) if np.std(returns) != 0 else np.nan
+
+    # Sortino Ratio (assuming risk-free rate is 0)
+    downside_returns = returns[returns < 0]
+    downside_deviation = np.std(downside_returns) if len(downside_returns) > 0 else np.nan
+    sortino_ratio = np.mean(returns) / downside_deviation if downside_deviation != 0 else np.nan
+
+    # Profit Factor
+    gross_profit = np.sum(returns[returns > 0])
+    gross_loss = np.abs(np.sum(returns[returns < 0]))
+    profit_factor = gross_profit / gross_loss if gross_loss != 0 else np.nan
+
+    return {
+        "Final Return": f"{cumulative_returns_percent[-1]:.2f}%",
+        "Sharpe Ratio": f"{sharpe_ratio:.2f}" if not np.isnan(sharpe_ratio) else "N/A",
+        "Sortino Ratio": f"{sortino_ratio:.2f}" if not np.isnan(sortino_ratio) else "N/A",
+        "Profit Factor": f"{profit_factor:.2f}" if not np.isnan(profit_factor) else "N/A"
+    }
+
+
 if __name__ == "__main__":
     st.title("Interactive Profitability Analyzer")
 
@@ -84,7 +117,6 @@ if __name__ == "__main__":
         win_ratio_percent = st.slider("Win Ratio (%)", min_value=0.0, max_value=100.0, value=40.0)
         win_ratio = win_ratio_percent / 100.0
         risk_reward_ratio = st.slider("Risk/Reward Ratio", min_value=0.1, max_value=5.0, step=0.1, value=2.0)
-        initial_capital = 10000 # Fixed initial capital, could be a slider too
         risk_per_trade_percent = st.slider("Risk per Trade (%)", min_value=0.1, max_value=10.0, step=0.1, value=1.0)
 
         if st.button("Re-run Simulation"): # Button in sidebar to re-run with potentially changed params
@@ -100,7 +132,7 @@ if __name__ == "__main__":
     with st.spinner('Running simulations...'):
         for _ in range(num_simulations):
             trade_results, cumulative_returns_percent = simulate_trades(
-                num_trades, win_ratio, risk_reward_ratio, initial_capital, risk_per_trade_percent
+                num_trades, win_ratio, risk_reward_ratio, risk_per_trade_percent
             )
             all_trade_results.append(trade_results)
             all_cumulative_returns_percent.append(cumulative_returns_percent)
@@ -112,21 +144,24 @@ if __name__ == "__main__":
 
     # --- Plot Results ---
     fig, ax = plt.subplots(figsize=(10, 6)) # Create plot here
-    plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_percent, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent, initial_capital)
+    plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_percent, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent)
     st.pyplot(fig) # Show plot in streamlit
 
-    # --- Output Summary ---
-    final_returns_percent = [returns[-1] for returns in all_cumulative_returns_percent]
-    average_final_return_percent = np.mean(final_returns_percent)
+    # --- Calculate and Display Stats Table ---
+    all_stats = [calculate_stats(results) for results in all_trade_results]
+    average_stats = {}
+    for key in all_stats[0].keys(): # Assuming all simulations have the same stats keys
+        # Extract values for each stat from all simulations, convert to float, and calculate mean
+        stat_values = [float(stat[key].replace('%','').replace('N/A','nan')) for stat in all_stats] # Handle % and N/A for averaging
+        stat_values = [val for val in stat_values if not np.isnan(val)] # Remove NaN values for mean calculation
+        if stat_values: # Check if there are valid values to average
+            average_stats[key] = f"{np.mean(stat_values):.2f}{'%' if '%' in all_stats[0][key] else ''}" if '%' in all_stats[0][key] else f"{np.mean(stat_values):.2f}"
+        else:
+            average_stats[key] = "N/A" # If no valid values, set to N/A
 
-    st.write("--- Simulation Summary ---")
-    st.write(f"Number of Simulations: {num_simulations}")
-    st.write(f"Initial Capital: ${initial_capital:.2f}")
-    st.write(f"Number of Trades per Simulation: {num_trades}")
-    st.write(f"Win Ratio: {win_ratio * 100:.2f}%")
-    st.write(f"Risk/Reward Ratio: 1:{risk_reward_ratio:.1f}")
-    st.write(f"Risk per Trade: {risk_per_trade_percent:.2f}%")
-    st.write(f"Average Final Return (over {num_simulations} simulations): {average_final_return_percent:.2f}%")
+    st.write("--- Average Simulation Summary ---")
+    st.table(average_stats)
+
 
     if st.session_state.rerun_button_clicked: # Check if button was clicked
         st.session_state.rerun_button_clicked = False # Reset button click state
