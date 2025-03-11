@@ -76,8 +76,8 @@ def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_
     for returns in all_cumulative_returns_percent:
         ax.plot(returns, color='lightgrey', linewidth=0.5)
 
-    # Plot the average cumulative return in blue with increased linewidth
-    ax.plot(average_cumulative_returns_percent, color='blue', linewidth=2, label=f'Average ({num_simulations} simulations)')
+    # Plot the average cumulative return in magenta with increased linewidth
+    ax.plot(average_cumulative_returns_percent, color='magenta', linewidth=2.5, label=f'Average ({num_simulations} simulations)')
 
     ax.set_title(f'Profitability Analyzer - Cumulative Returns (Log Scale) ({num_simulations} Simulations)\nWin Ratio: {win_ratio*100:.2f}%, R:R 1:{risk_reward_ratio:.1f}, Trades: {num_trades}, Risk: {risk_per_trade_percent:.2f}%')
     ax.set_xlabel('Number of Trades')
