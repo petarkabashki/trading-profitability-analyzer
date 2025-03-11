@@ -77,8 +77,8 @@ def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_
     # Debug: Print average_cumulative_returns_percent before plotting
     # print("Average Cumulative Returns (first 10 values):", average_cumulative_returns_percent[:10]) # No longer needed
 
-    # Define a color cycle
-    colors = plt.cm.viridis(np.linspace(0, 0.8, len(all_cumulative_returns_percent))) # Use viridis colormap
+    # Define a color cycle that is more spread out
+    colors = plt.cm.viridis(np.linspace(0, 1, num_simulations)) # Use full range of viridis colormap
 
     # Plot individual simulations with different colors and alpha=0.3
     for i, returns in enumerate(all_cumulative_returns_percent):
