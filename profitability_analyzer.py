@@ -151,7 +151,7 @@ def calculate_stats(trade_results, cumulative_returns_percent): # Initial capita
 
     # Sortino Ratio (assuming risk-free rate is 0)
     downside_returns = returns[returns < 0]
-    downside_deviation = np.std(downside_returns) if len(downside_returns) > 0 else np.nan
+    downside_deviation = np.std(downside_returns) if len(downside_returns) > 1 else 0 # handle case where len(downside_returns) <= 1
     sortino_ratio = np.nan # Initialize sortino_ratio to nan
     if downside_deviation != 0:
         sortino_ratio = np.mean(returns) / downside_deviation
