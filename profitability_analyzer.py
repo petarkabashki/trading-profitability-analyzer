@@ -19,7 +19,7 @@ def simulate_trades_vectorized(num_trades, num_simulations, win_ratio, risk_rewa
     The function returns:
         - all_cumulative_returns_percent (list of lists): Cumulative returns (in percent) for each simulation,
           computed as np.expm1(cumulative_log_returns) * 100.
-        - average_cumulative_returns_percent (float): The average of the final cumulative returns (in percent) across simulations.
+        - average_cumulative_returns_percent (np.ndarray): The average cumulative returns (in percent) across simulations *over time*.
         - all_cumulative_log_returns_percent (list of lists): Cumulative log returns (in percent) for each simulation.
         - average_cumulative_log_returns_percent (float): The average of the final cumulative log returns (in percent) across simulations.
     """
@@ -45,13 +45,15 @@ def simulate_trades_vectorized(num_trades, num_simulations, win_ratio, risk_rewa
     # Convert cumulative log returns to actual cumulative returns using np.expm1.
     cumulative_returns_percent = np.expm1(cumulative_log_returns) * 100
 
-    # Compute the average of the final cumulative returns across simulations.
-    average_cumulative_returns_percent = np.mean(cumulative_returns_percent[:, -1])
+    # Compute the average of the cumulative returns *over time* across simulations.
+    average_cumulative_returns_percent = np.nanmean(cumulative_returns_percent, axis=0) # Mean over axis 0 (simulations)
+
+
     # Compute the average of the final cumulative log returns (in percent) across simulations.
     average_cumulative_log_returns_percent = np.mean(cumulative_log_returns_percent[:, -1])
 
     return (cumulative_returns_percent.tolist(),
-            average_cumulative_returns_percent,
+            average_cumulative_returns_percent, # Now this is a timeseries array
             cumulative_log_returns_percent.tolist(),
             average_cumulative_log_returns_percent)
 
@@ -63,7 +65,7 @@ def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_
     Args:
         ax (matplotlib.axes._axes.Axes): Matplotlib axes object to plot on.
         all_cumulative_returns_percent (list of lists): List of cumulative returns in percentage for each simulation.
-        average_cumulative_returns_percent (list): List of average cumulative returns in percentage.
+        average_cumulative_returns_percent (np.ndarray): Array of average cumulative returns in percentage *over time*.
         num_simulations (int): Number of simulations run.
         win_ratio (float): Win ratio used in simulations.
         risk_reward_ratio (float): Risk/reward ratio used in simulations.
@@ -73,11 +75,11 @@ def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_
     ax.clear() # Clear previous plot
 
     # Debug: Print average_cumulative_returns_percent before plotting
-    print("Average Cumulative Returns (first 10 values):", average_cumulative_returns_percent[:10])
+    # print("Average Cumulative Returns (first 10 values):", average_cumulative_returns_percent[:10]) # No longer needed
 
-    # Plot individual simulations in light grey (commented out for debugging)
-    # for returns in all_cumulative_returns_percent:
-    #     ax.plot(returns, color='lightgrey', linewidth=0.5)
+    # Plot individual simulations in light grey
+    for returns in all_cumulative_returns_percent:
+        ax.plot(returns, color='lightgrey', linewidth=0.5)
 
     # Plot the average cumulative return in magenta with increased linewidth
     ax.plot(average_cumulative_returns_percent, color='magenta', linewidth=2.5, label=f'Average ({num_simulations} simulations)')
