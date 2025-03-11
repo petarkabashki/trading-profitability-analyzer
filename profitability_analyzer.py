@@ -2,51 +2,58 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
-def simulate_trades(num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percent):
+import numpy as np
+
+def simulate_trades_vectorized(num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percent):
     """
-    Simulates multiple series of trades using vectorized operations and calculates cumulative log returns in percentage.
+    Simulates multiple series of trades using fully vectorized operations and computes both the cumulative returns 
+    and the cumulative log returns (expressed in percentage), along with their respective averages over simulations.
 
-    Args:
-        num_trades (int): The number of trades to simulate per simulation.
-        num_simulations (int): The number of simulations to run.
-        win_ratio (float): The probability of winning a trade (0 to 1).
-        risk_reward_ratio (float): The ratio of potential reward to risk.
-        risk_per_trade_percent (float): The percentage of capital to risk on each trade.
-
-    Returns:
-        tuple: A tuple containing:
-            - all_trade_results (list of lists): List of trade outcomes for each simulation.
-            - all_cumulative_returns_percent (list of lists): List of cumulative returns in percentage for each simulation.
+    For each trade:
+      - A win yields a log return of: ln(1 + (risk_reward_ratio * risk_per_trade_percent / 100))
+      - A loss yields a log return of: ln(1 - (risk_per_trade_percent / 100))
+    
+    The cumulative log returns are computed by summing the individual trade log returns. The actual cumulative returns 
+    are then derived by converting the cumulative log returns using np.expm1.
+    
+    The function returns:
+        - all_cumulative_returns_percent (list of lists): Cumulative returns (in percent) for each simulation,
+          computed as np.expm1(cumulative_log_returns) * 100.
+        - average_cumulative_returns_percent (float): The average of the final cumulative returns (in percent) across simulations.
+        - all_cumulative_log_returns_percent (list of lists): Cumulative log returns (in percent) for each simulation.
+        - average_cumulative_log_returns_percent (float): The average of the final cumulative log returns (in percent) across simulations.
     """
-    initial_capital = 100.0  # Initial capital for percentage calculation
-    all_cumulative_returns_percent = []
-    all_trade_results = []
-
-    # Vectorized simulation
-    for _ in range(num_simulations):
-        # Generate random outcomes for all trades in a simulation at once
-        trade_outcomes = np.random.rand(num_trades)
-
-        # Determine wins and losses based on win ratio
-        wins = trade_outcomes < win_ratio
-        losses = ~wins
-
-        # Calculate risk and reward amounts for each trade
-        risk_amount = initial_capital * (risk_per_trade_percent / 100.0)
-        reward_amount = risk_amount * risk_reward_ratio
-
-        # Vectorized trade results
-        trade_results_simulation = np.where(wins, reward_amount, -risk_amount)
-
-        # Calculate cumulative returns in log scale
-        cumulative_returns = np.cumsum(trade_results_simulation) + initial_capital
-        cumulative_returns_percent = np.log(cumulative_returns / initial_capital) * 100 # Log returns in percentage
-
-
-        all_trade_results.append(trade_results_simulation.tolist())
-        all_cumulative_returns_percent.append(cumulative_returns_percent.tolist())
-
-    return all_trade_results, all_cumulative_returns_percent
+    # Generate a matrix of random outcomes: rows represent simulations, columns represent trades.
+    random_outcomes = np.random.rand(num_simulations, num_trades)
+    
+    # Determine wins (True if outcome < win_ratio) and losses.
+    wins = random_outcomes < win_ratio
+    
+    # Calculate log returns for wins and losses.
+    win_log_return = np.log(1 + risk_reward_ratio * risk_per_trade_percent / 100.0)
+    loss_log_return = np.log(1 - risk_per_trade_percent / 100.0)
+    
+    # Compute trade log returns for each simulation.
+    trade_log_returns = np.where(wins, win_log_return, loss_log_return)
+    
+    # Compute cumulative log returns along each simulation.
+    cumulative_log_returns = np.cumsum(trade_log_returns, axis=1)
+    
+    # Convert cumulative log returns to percentage.
+    cumulative_log_returns_percent = cumulative_log_returns * 100
+    
+    # Convert cumulative log returns to actual cumulative returns using np.expm1.
+    cumulative_returns_percent = np.expm1(cumulative_log_returns) * 100
+    
+    # Compute the average of the final cumulative returns across simulations.
+    average_cumulative_returns_percent = np.mean(cumulative_returns_percent[:, -1])
+    # Compute the average of the final cumulative log returns (in percent) across simulations.
+    average_cumulative_log_returns_percent = np.mean(cumulative_log_returns_percent[:, -1])
+    
+    return (cumulative_returns_percent.tolist(), 
+            average_cumulative_returns_percent, 
+            cumulative_log_returns_percent.tolist(), 
+            average_cumulative_log_returns_percent)
 
 
 def plot_results(ax, all_cumulative_returns_percent, average_cumulative_returns_percent, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent):
