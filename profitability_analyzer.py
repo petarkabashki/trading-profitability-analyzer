@@ -127,7 +127,7 @@ def calculate_stats(trade_results, cumulative_returns_percent, initial_capital=1
     Returns:
         dict: Dictionary of performance statistics.
     """
-    returns = np.array(trade_results) / (initial_capital / 100.0) # Calculate returns as percentage of initial capital
+    returns = np.array(trade_results) # Returns are already in percentage
 
     print("First 10 trade_results:", trade_results[:10]) # Debugging
     print("First 10 returns:", returns[:10]) # Debugging
@@ -146,6 +146,12 @@ def calculate_stats(trade_results, cumulative_returns_percent, initial_capital=1
     gross_profit = np.sum(returns[returns > 0])
     gross_loss = np.abs(np.sum(returns[returns < 0]))
     profit_factor = gross_profit / gross_loss if gross_loss != 0 else np.nan
+
+    print("Gross Profit:", gross_profit) # Debugging
+    print("Gross Loss:", gross_loss) # Debugging
+    print("Profit Factor (calculated):", profit_factor) # Debugging
+    print("Downside Deviation:", downside_deviation) # Debugging
+
 
     # Max Drawdown
     max_drawdown_percent = calculate_drawdown(cumulative_returns_percent)
