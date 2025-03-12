@@ -227,7 +227,7 @@ if __name__ == "__main__":
     profit_vs_risk_data_1 = calculate_profit_vs_risk_vectorized(num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percents_range_1)
 
     fig_profit_risk, ax_profit_risk = plt.subplots(figsize=(10, 6))
-    ax_profit_risk.plot(risk_per_trade_percents_range_1, np.expm1(profit_vs_risk_data_1) * 100, linestyle='-') # Convert to percentage for plotting
+    ax_profit_risk.plot(risk_per_trade_percents_range_1, np.expm1   (profit_vs_risk_data_1) * 100, linestyle='-') # Convert to percentage for plotting
     ax_profit_risk.set_title('Profit vs Risk per Trade')
     ax_profit_risk.set_xlabel('Risk per Trade (%)') # X-axis label in percentage
     ax_profit_risk.set_ylabel('Average Cumulative Log Return (%)') # Y-axis label in percentage
