@@ -94,21 +94,21 @@ def calculate_sortino_ratio_log(trade_log_returns, target=0.0):
     else:
         return np.nan
 
-def calculate_stats(trade_results, trade_log_returns, cumulative_returns, cumulative_log_returns):
+def calculate_stats(average_trade_results, average_trade_log_returns, average_cumulative_returns, average_cumulative_log_returns):
     """
-    Computes performance statistics for a single simulation.
+    Computes performance statistics for the average simulation path.
     """
-    simple_returns = np.array(trade_results)
-    log_returns = np.array(trade_log_returns)
+    simple_returns = np.array(average_trade_results)
+    log_returns = np.array(average_trade_log_returns)
     sharpe_ratio = np.mean(log_returns) / np.std(log_returns) if np.std(log_returns) != 0 else np.nan
     sortino_ratio = calculate_sortino_ratio_log(log_returns)
     gross_profit = np.sum(simple_returns[simple_returns > 0])
     gross_loss = np.abs(np.sum(simple_returns[simple_returns < 0]))
     profit_factor = gross_profit / gross_loss if gross_loss != 0 else np.nan
-    max_drawdown = calculate_drawdown_log(cumulative_log_returns)
-    
+    max_drawdown = calculate_drawdown_log(average_cumulative_log_returns)
+
     return {
-        "Final Return": f"{cumulative_returns[-1]*100:.2f}%", # Display as percentage
+        "Final Return": f"{average_cumulative_returns[-1]*100:.2f}%", # Display as percentage
         "Sharpe Ratio": f"{sharpe_ratio:.2f}" if not np.isnan(sharpe_ratio) else "N/A",
         "Sortino Ratio": f"{sortino_ratio:.2f}" if not np.isnan(sortino_ratio) else "N/A",
         "Profit Factor": f"{profit_factor:.2f}" if not np.isnan(profit_factor) else "N/A",
@@ -152,7 +152,7 @@ if __name__ == "__main__":
         # Compute max drawdown for each simulation path.
         for log_returns in all_cumulative_log_returns:
             all_max_drawdowns.append(calculate_drawdown_log(log_returns))
-        
+
         # Global max drawdown: worst drawdown across all paths.
         global_max_drawdown = np.max(all_max_drawdowns)
         # Average path drawdown: max drawdown computed on the average cumulative log returns.
@@ -163,27 +163,12 @@ if __name__ == "__main__":
     plot_results(ax, all_cumulative_returns, average_cumulative_returns, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent)
     st.pyplot(fig)
 
-# calculate the stats over the averaged path only AI!
     # --- Calculate and Display Stats Table ---
-    all_stats = []
-    for i in range(num_simulations):
-        stats = calculate_stats(all_trade_results[i], all_trade_log_returns[i], all_cumulative_returns[i], all_cumulative_log_returns[i])
-        all_stats.append(stats)
+    # Calculate stats for the average path only AI!
+    average_trade_results = np.nanmean(np.array(all_trade_results), axis=0)
+    average_trade_log_returns = np.nanmean(np.array(all_trade_log_returns), axis=0)
+    average_stats = calculate_stats(average_trade_results, average_trade_log_returns, average_cumulative_returns, average_cumulative_log_returns_ts)
 
-    # Compute average stats for keys other than drawdown.
-    average_stats = {}
-    keys_to_average = ["Final Return", "Sharpe Ratio", "Sortino Ratio", "Profit Factor"]
-    for key in keys_to_average:
-        values = []
-        for stat in all_stats:
-            try:
-                values.append(float(stat[key]))
-            except:
-                continue
-        if values:
-            average_stats[key] = f"{np.mean(values):.2f}"
-        else:
-            average_stats[key] = "N/A"
 
     # Override drawdown stats as specified:
     average_stats["Max Drawdown"] = f"{global_max_drawdown*100:.2f}%" # Display as percentage
