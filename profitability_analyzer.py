@@ -56,12 +56,12 @@ def plot_results(ax, cumulative_returns, average_cumulative_returns, num_simulat
     ax.clear()
     colors = plt.cm.viridis(np.linspace(0, 1, num_simulations))
     for i, returns in enumerate(cumulative_returns):
-        ax.plot(returns, color=colors[i], linewidth=0.5, alpha=0.3)
-    ax.plot(average_cumulative_returns, color='magenta', linewidth=2.5, label=f'Average ({num_simulations} simulations)')
+        ax.plot(np.array(returns) * 100, color=colors[i], linewidth=0.5, alpha=0.3) # Convert to percentage for plotting
+    ax.plot(average_cumulative_returns * 100, color='magenta', linewidth=2.5, label=f'Average ({num_simulations} simulations)') # Convert to percentage for plotting
     ax.set_title(f'Profitability Analyzer - Cumulative Returns ({num_simulations} Simulations)\n'
                  f'Win Ratio: {win_ratio*100:.2f}%, R:R 1:{risk_reward_ratio:.1f}, Trades: {num_trades}, Risk: {risk_per_trade_percent:.2f}%')
     ax.set_xlabel('Number of Trades')
-    ax.set_ylabel('Cumulative Return (decimal)')
+    ax.set_ylabel('Cumulative Return (%)') # Y-axis label in percentage
     ax.grid(True)
     ax.axhline(y=0, color='r', linestyle='--')
     ax.legend()
@@ -108,11 +108,11 @@ def calculate_stats(trade_results, trade_log_returns, cumulative_returns, cumula
     max_drawdown = calculate_drawdown_log(cumulative_log_returns)
     
     return {
-        "Final Return": f"{cumulative_returns[-1]:.2f}",
+        "Final Return": f"{cumulative_returns[-1]*100:.2f}%", # Display as percentage
         "Sharpe Ratio": f"{sharpe_ratio:.2f}" if not np.isnan(sharpe_ratio) else "N/A",
         "Sortino Ratio": f"{sortino_ratio:.2f}" if not np.isnan(sortino_ratio) else "N/A",
         "Profit Factor": f"{profit_factor:.2f}" if not np.isnan(profit_factor) else "N/A",
-        "Max Drawdown": f"{max_drawdown:.2f}"
+        "Max Drawdown": f"{max_drawdown*100:.2f}%" # Display as percentage
     }
 
 if __name__ == "__main__":
@@ -185,8 +185,8 @@ if __name__ == "__main__":
             average_stats[key] = "N/A"
 
     # Override drawdown stats as specified:
-    average_stats["Max Drawdown"] = f"{global_max_drawdown:.2f}"
-    average_stats["Average Max Drawdown"] = f"{average_path_drawdown:.2f}"
+    average_stats["Max Drawdown"] = f"{global_max_drawdown*100:.2f}%" # Display as percentage
+    average_stats["Average Max Drawdown"] = f"{average_path_drawdown*100:.2f}%" # Display as percentage
 
     st.write("--- Average Simulation Summary ---")
     st.table(average_stats)
