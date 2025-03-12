@@ -173,7 +173,7 @@ if __name__ == "__main__":
         st.header("Simulation Parameters")
         num_simulations = st.slider("Number of Simulations", min_value=1, max_value=500, value=100)
         num_trades = st.slider("Number of Trades per Simulation", min_value=10, max_value=2000, value=1000)
-        win_ratio_percent = st.slider("Win Ratio (%)", min_value=0.0, max_value=100.0, value=40.0)
+        win_ratio_percent = st.slider("Win Ratio (%)", min_value=0.0, max_value=100.0, value=35.0)
         win_ratio = win_ratio_percent / 100.0
         risk_reward_ratio = st.slider("Risk/Reward Ratio", min_value=0.1, max_value=5.0, step=0.1, value=2.0)
         risk_per_trade_percent = st.slider("Risk per Trade (%)", min_value=0.1, max_value=10.0, step=0.1, value=1.0)
@@ -223,25 +223,13 @@ if __name__ == "__main__":
     st.table(average_stats)
 
     # --- Profit vs Risk Plot ---
-    risk_per_trade_percents_range_1 = np.linspace(0.1, 10.0, num=100) # Range of risk percentages to test
+    risk_per_trade_percents_range_1 = np.linspace(0.05, 15.0, num=100) # Range of risk percentages to test
     profit_vs_risk_data_1 = calculate_profit_vs_risk_vectorized(num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percents_range_1)
 
     fig_profit_risk, ax_profit_risk = plt.subplots(figsize=(10, 6))
-    ax_profit_risk.plot(risk_per_trade_percents_range_1, profit_vs_risk_data_1 * 100, marker='o', linestyle='-') # Convert to percentage for plotting
+    ax_profit_risk.plot(risk_per_trade_percents_range_1, np.expm1(profit_vs_risk_data_1) * 100, linestyle='-') # Convert to percentage for plotting
     ax_profit_risk.set_title('Profit vs Risk per Trade')
     ax_profit_risk.set_xlabel('Risk per Trade (%)') # X-axis label in percentage
     ax_profit_risk.set_ylabel('Average Cumulative Log Return (%)') # Y-axis label in percentage
     ax_profit_risk.grid(True)
     st.pyplot(fig_profit_risk)
-
-    # --- Profit vs Risk Plot 2 ---
-    risk_per_trade_percents_range_2 = np.linspace(0.0, 10.0, num=100) # Range of risk percentages to test
-    profit_vs_risk_data_2 = calculate_profit_vs_risk_vectorized(num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percents_range_2)
-
-    fig_profit_risk_2, ax_profit_risk_2 = plt.subplots(figsize=(10, 6))
-    ax_profit_risk_2.plot(risk_per_trade_percents_range_2, profit_vs_risk_data_2 * 100, marker='o', linestyle='-') # Convert to percentage for plotting
-    ax_profit_risk_2.set_title('Profit vs Risk per Trade (Risk 0-10%)')
-    ax_profit_risk_2.set_xlabel('Risk per Trade (%)') # X-axis label in percentage
-    ax_profit_risk_2.set_ylabel('Average Cumulative Log Return (%)') # Y-axis label in percentage
-    ax_profit_risk_2.grid(True)
-    st.pyplot(fig_profit_risk_2)
