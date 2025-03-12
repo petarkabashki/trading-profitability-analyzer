@@ -164,11 +164,9 @@ if __name__ == "__main__":
     st.pyplot(fig)
 
     # --- Calculate and Display Stats Table ---
-    # Calculate stats for the average path only AI!
     average_trade_results = np.nanmean(np.array(all_trade_results), axis=0)
     average_trade_log_returns = np.nanmean(np.array(all_trade_log_returns), axis=0)
     average_stats = calculate_stats(average_trade_results, average_trade_log_returns, average_cumulative_returns, average_cumulative_log_returns_ts)
-
 
     # Override drawdown stats as specified:
     average_stats["Max Drawdown"] = f"{global_max_drawdown*100:.2f}%" # Display as percentage
