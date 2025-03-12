@@ -14,16 +14,15 @@ def simulate_trades_vectorized(num_trades, num_simulations, win_ratio, risk_rewa
         - trade_results (list of lists): Simple trade returns for each simulation.
         - trade_log_returns (list of lists): Trade log returns for each simulation.
     """
-    initial_capital = 100.0  # Only used to compute risk amounts.
     random_outcomes = np.random.rand(num_simulations, num_trades)
     wins = random_outcomes < win_ratio
 
     # Compute risk and reward in simple return (decimal) terms.
-    risk_amount = initial_capital * (risk_per_trade_percent / 100.0)
+    risk_amount = (risk_per_trade_percent / 100.0)
     reward_amount = risk_amount * risk_reward_ratio
 
-    win_return = reward_amount / initial_capital  # e.g. 0.02 for 1% risk at 2:1 ratio
-    loss_return = -risk_amount / initial_capital    # e.g. -0.01 for 1% risk
+    win_return = reward_amount  # e.g. 0.02 for 1% risk at 2:1 ratio
+    loss_return = -risk_amount  # e.g. -0.01 for 1% risk
 
     trade_results_simulation = np.where(wins, win_return, loss_return)
 
@@ -48,6 +47,30 @@ def simulate_trades_vectorized(num_trades, num_simulations, win_ratio, risk_rewa
             average_cumulative_log_return,
             trade_results_simulation.tolist(),
             trade_log_returns.tolist())
+
+import numpy as np
+
+def calculate_profit_vs_risk(num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percents):
+    """
+    Calculates the profit (average cumulative log return) for different risk per trade percentages.
+
+    Args:
+        num_trades (int): Number of trades in each simulation.
+        num_simulations (int): Number of simulations to run.
+        win_ratio (float): Win ratio (probability of winning a trade).
+        risk_reward_ratio (float): Risk-reward ratio.
+        risk_per_trade_percents (list or np.ndarray): List of risk per trade percentages to test.
+
+    Returns:
+        dict: A dictionary where keys are risk_per_trade_percents and values are the corresponding average_cumulative_log_return.
+    """
+    profit_vs_risk = {}
+    for risk_percent in risk_per_trade_percents:
+        _, _, _, _, average_cumulative_log_return, _, _ = simulate_trades_vectorized(
+            num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_percent
+        )
+        profit_vs_risk[risk_percent] = average_cumulative_log_return
+    return profit_vs_risk
 
 def plot_results(ax, cumulative_returns, average_cumulative_returns, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent):
     """
@@ -169,8 +192,8 @@ if __name__ == "__main__":
     average_stats = calculate_stats(average_trade_results, average_trade_log_returns, average_cumulative_returns, average_cumulative_log_returns_ts)
 
     # Override drawdown stats as specified:
-    average_stats["Max Drawdown"] = f"{global_max_drawdown*100:.2f}%" # Display as percentage
-    average_stats["Average Max Drawdown"] = f"{average_path_drawdown*100:.2f}%" # Display as percentage
+    average_stats["Max Drawdown (Global)"] = f"{global_max_drawdown*100:.2f}%" # Display as percentage
+    average_stats["Max Drawdown"] = f"{average_path_drawdown*100:.2f}%" # Display as percentage
 
     st.write("--- Average Simulation Summary ---")
     st.table(average_stats)
