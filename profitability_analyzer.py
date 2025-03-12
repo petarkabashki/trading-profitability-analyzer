@@ -153,8 +153,11 @@ def calculate_stats(trade_results, cumulative_returns_percent): # Initial capita
     downside_returns = returns[returns < 0]
     downside_deviation = np.std(downside_returns) if len(downside_returns) > 1 else 0 # handle case where len(downside_returns) <= 1
     sortino_ratio = np.nan # Initialize sortino_ratio to nan
-    if downside_deviation != 0:
+    if downside_deviation > 1e-9: # consider downside_deviation effectively zero if it's very small
         sortino_ratio = np.mean(returns) / downside_deviation
+    else:
+        print("Downside deviation is effectively zero, Sortino Ratio set to N/A")
+
 
     # Profit Factor
     gross_profit = np.sum(returns[returns > 0])
