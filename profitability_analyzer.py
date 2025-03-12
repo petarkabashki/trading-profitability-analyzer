@@ -228,7 +228,7 @@ if __name__ == "__main__":
 
     fig_profit_risk, ax_profit_risk = plt.subplots(figsize=(10, 6))
     ax_profit_risk.plot(risk_per_trade_percents_range_1, np.expm1   (profit_vs_risk_data_1) * 100, linestyle='-') # Convert to percentage for plotting
-    ax_profit_risk.set_title('Profit vs Risk per Trade')
+    ax_profit_risk.set_title(f'Profit vs Risk per Trade (Win Ratio: {win_ratio_percent:.2f}%, R:R 1:{risk_reward_ratio:.1f})')
     ax_profit_risk.set_xlabel('Risk per Trade (%)') # X-axis label in percentage
     ax_profit_risk.set_ylabel('Average Cumulative Log Return (%)') # Y-axis label in percentage
     ax_profit_risk.grid(True)
