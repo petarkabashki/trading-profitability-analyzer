@@ -163,7 +163,7 @@ def calculate_stats(average_trade_results, average_trade_log_returns, average_cu
     }
 
 if __name__ == "__main__":
-    st.title("Interactive Profitability Analyzer")
+    st.title("Interactive Trading Profitability Analyzer")
 
     if 'rerun_button_clicked' not in st.session_state:
         st.session_state.rerun_button_clicked = False
