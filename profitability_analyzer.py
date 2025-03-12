@@ -198,5 +198,14 @@ if __name__ == "__main__":
     st.write("--- Average Simulation Summary ---")
     st.table(average_stats)
 
-    if st.session_state.rerun_button_clicked:
-        st.session_state.rerun_button_clicked = False
+    # --- Profit vs Risk Plot ---
+    risk_per_trade_percents_range = np.linspace(0.1, 10.0, num=100) # Range of risk percentages to test
+    profit_vs_risk_data = calculate_profit_vs_risk(num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percents_range)
+
+    fig_profit_risk, ax_profit_risk = plt.subplots(figsize=(10, 6))
+    ax_profit_risk.plot(profit_vs_risk_data.keys(), [val * 100 for val in profit_vs_risk_data.values()], marker='o', linestyle='-') # Convert to percentage for plotting
+    ax_profit_risk.set_title('Profit vs Risk per Trade')
+    ax_profit_risk.set_xlabel('Risk per Trade (%)') # X-axis label in percentage
+    ax_profit_risk.set_ylabel('Average Cumulative Log Return (%)') # Y-axis label in percentage
+    ax_profit_risk.grid(True)
+    st.pyplot(fig_profit_risk)
