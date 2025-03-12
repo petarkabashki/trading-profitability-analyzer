@@ -222,6 +222,9 @@ if __name__ == "__main__":
     st.write("--- Average Simulation Summary ---")
     st.table(average_stats)
 
+
+    # --- Profit vs Risk ---
+    st.header("Profit vs Risk")
     # --- Profit vs Risk Plot ---
     risk_per_trade_percents_range_1 = np.linspace(0.05, 15.0, num=100) # Range of risk percentages to test
     profit_vs_risk_data_1 = calculate_profit_vs_risk_vectorized(num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percents_range_1)
