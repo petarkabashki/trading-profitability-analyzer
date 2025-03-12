@@ -50,27 +50,51 @@ def simulate_trades_vectorized(num_trades, num_simulations, win_ratio, risk_rewa
 
 import numpy as np
 
-def calculate_profit_vs_risk(num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percents):
+
+def calculate_profit_vs_risk_vectorized(num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_per_trade_percents):
     """
-    Calculates the profit (average cumulative log return) for different risk per trade percentages.
+    Calculates the profit (average cumulative log return) for different risk per trade percentages
+    in a fully vectorized manner, without calling the simulate_trades_vectorized function in a loop.
 
     Args:
         num_trades (int): Number of trades in each simulation.
-        num_simulations (int): Number of simulations to run.
+        num_simulations (int): Number of simulations to run for each risk level.
         win_ratio (float): Win ratio (probability of winning a trade).
         risk_reward_ratio (float): Risk-reward ratio.
-        risk_per_trade_percents (list or np.ndarray): List of risk per trade percentages to test.
+        risk_per_trade_percents (np.ndarray): Array of risk per trade percentages to test.
 
     Returns:
-        dict: A dictionary where keys are risk_per_trade_percents and values are the corresponding average_cumulative_log_return.
+        np.ndarray: Array of average_cumulative_log_return corresponding to each risk_per_trade_percent.
     """
-    profit_vs_risk = {}
-    for risk_percent in risk_per_trade_percents:
-        _, _, _, _, average_cumulative_log_return, _, _ = simulate_trades_vectorized(
-            num_trades, num_simulations, win_ratio, risk_reward_ratio, risk_percent
-        )
-        profit_vs_risk[risk_percent] = average_cumulative_log_return
-    return profit_vs_risk
+    num_risk_levels = len(risk_per_trade_percents)
+
+    # 1. Generate random outcomes for all simulations and risk levels at once.
+    #    Shape: (num_risk_levels, num_simulations, num_trades)
+    random_outcomes = np.random.rand(num_risk_levels, num_simulations, num_trades)
+    wins = random_outcomes < win_ratio
+
+    # 2. Vectorize risk and reward calculations for all risk levels.
+    risk_amount = (risk_per_trade_percents[:, np.newaxis, np.newaxis] / 100.0) # Shape: (num_risk_levels, 1, 1) for broadcasting
+    reward_amount = risk_amount * risk_reward_ratio
+
+    win_return = reward_amount
+    loss_return = -risk_amount
+
+    trade_results_simulation = np.where(wins, win_return, loss_return) # Shape: (num_risk_levels, num_simulations, num_trades)
+
+    # 3. Vectorize log return calculations.
+    win_log_return = np.log(1 + risk_reward_ratio * risk_per_trade_percents[:, np.newaxis, np.newaxis] / 100.0) # Shape: (num_risk_levels, 1, 1)
+    loss_log_return = np.log(1 - risk_per_trade_percents[:, np.newaxis, np.newaxis] / 100.0) # Shape: (num_risk_levels, 1, 1)
+    trade_log_returns = np.where(wins, win_log_return, loss_log_return) # Shape: (num_risk_levels, num_simulations, num_trades)
+
+    # 4. Vectorize cumulative log returns calculation.
+    cumulative_log_returns = np.cumsum(trade_log_returns, axis=2) # Shape: (num_risk_levels, num_simulations, num_trades)
+
+    # 5. Vectorize average cumulative log return calculation for each risk level.
+    average_cumulative_log_return_per_risk = np.mean(cumulative_log_returns[:, :, -1], axis=1) # Shape: (num_risk_levels,) - average over simulations (axis=1), keep last trade
+
+    # 6. Return the array directly.
+    return average_cumulative_log_return_per_risk
 
 def plot_results(ax, cumulative_returns, average_cumulative_returns, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent):
     """
