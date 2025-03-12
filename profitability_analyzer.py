@@ -163,6 +163,7 @@ if __name__ == "__main__":
     plot_results(ax, all_cumulative_returns, average_cumulative_returns, num_simulations, win_ratio, risk_reward_ratio, num_trades, risk_per_trade_percent)
     st.pyplot(fig)
 
+# calculate the stats over the averaged path only AI!
     # --- Calculate and Display Stats Table ---
     all_stats = []
     for i in range(num_simulations):
